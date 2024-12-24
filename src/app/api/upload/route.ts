@@ -14,54 +14,45 @@ export const config = {
 export async function POST(req, res) {
   try {
     const formData = await req.formData();
-
-    // Extracting files and text from the form data
-    const cv = formData.get("cv");
-    const coverLetter = formData.get("coverLetter");
     const skillsText = formData.get("skillsText");
     const jobType = formData.get("jobType");
+    const files = formData.getAll("files") || [];
+    console.log("Files:", files);
 
-    if (!cv || !coverLetter || !skillsText) {
+    if (files.length < 0 || !skillsText) {
       return NextResponse.json(
-        { message: "Missing required fields: cv, coverLetter, or skillsText" },
+        { message: "Missing required fields: files or skillsText" },
         { status: 400 }
       );
     }
 
-    // Log the form data for debugging
-    console.log("Form Data:", formData);
-    console.log("CV:", cv);
-    console.log("Cover Letter:", coverLetter);
-    console.log("Skills:", skillsText);
-
-    // Set up file paths (saving files to a public/uploads directory)
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    // Generate unique filenames using UUID
-    const uniqueCvName = uuidv4() + path.extname(cv.name);
-    const uniqueCoverLetterName = uuidv4() + path.extname(coverLetter.name);
+    const uploadedFiles = [];
+    await Promise.all(
+      files.map(async (file) => {
+        const uniqueFileName = uuidv4() + path.extname(file.name);
+        const filePath = path.join(uploadDir, uniqueFileName);
 
-    // Paths to save the files with unique names
-    const cvPath = path.join(uploadDir, uniqueCvName);
-    const coverLetterPath = path.join(uploadDir, uniqueCoverLetterName);
+        // Push file information to uploadedFiles array
+        uploadedFiles.push(uniqueFileName);
 
-    // Save files to the disk
-    await fs.promises.writeFile(cvPath, Buffer.from(await cv.arrayBuffer()));
-    await fs.promises.writeFile(
-      coverLetterPath,
-      Buffer.from(await coverLetter.arrayBuffer())
+        // Write the file to the filesystem
+        await fs.promises.writeFile(
+          filePath,
+          Buffer.from(await file.arrayBuffer())
+        );
+      })
     );
 
-    // Save the data to MongoDB with the unique filenames
     const newUpload = {
-      cv: uniqueCvName, // Store the unique filename in MongoDB
-      coverLetter: uniqueCoverLetterName, // Store the unique filename in MongoDB
       skills: skillsText, // User's skills text
       createdAt: new Date(),
       jobType,
+      files: uploadedFiles,
     };
 
     const client = await clientPromise;

@@ -57,8 +57,7 @@ export async function POST(req, res) {
           title: entry.title,
           matchCount,
           id: entry._id,
-          coverLetter: entry.coverLetter,
-          cv: entry.cv,
+          files: entry.files,
         };
       })
       .filter((entry) => entry.matchCount > 0)
