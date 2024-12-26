@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+
 import { useState } from "react";
 import { filterString } from "../../utils/functions/filterString";
 import Upload from "@/components/upload/Upload";
@@ -7,19 +7,11 @@ import Skills from "@/components/skills/Skills";
 
 export default function Home() {
   const [skills, setSkills] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-
   const [message, setMessage] = useState("");
   const [roleType, setRoleType] = useState<"fullTime" | "wordingStudent">("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setResult(null);
-
     if (skills.length === 0) {
       setMessage("Please add your skills");
       return;
@@ -40,10 +32,10 @@ export default function Home() {
       const data = await response.json();
 
       if (response.ok) {
-        setResult(data.data); // Set the matched CV and Cover Letter data
+
         const { data: res } = data;
         console.log({ res });
-        if (res.files.length > 0) {
+        if (res?.files.length > 0) {
           // if (res.coverLetter) files.push(res.coverLetter);
           // if (res.cv) files.push(res.cv);
           downloadFiles(res.files);
@@ -51,13 +43,10 @@ export default function Home() {
           setMessage("No matching found");
         }
       } else {
-        setError(data.message); // Show error message if no match found
       }
     } catch (err) {
-      setError("Error connecting to the server");
+
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
